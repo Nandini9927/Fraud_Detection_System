@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexPay — Secure UPI Payments with FraudShield AI</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface2: #f8f9fb;
+    --border: #e2e6ea;
+    --primary: #003087;
+    --primary-light: #0050c8;
+    --accent: #ff6b00;
+    --accent2: #00b86b;
+    --text: #0d1421;
+    --muted: #6b7280;
+    --danger: #dc2626;
+    --gold: #c9922a;
+    --allow: #059669;
+    --allow-bg: #f0fdf4;
+    --otp-color: #d97706;
+    --otp-bg: #fffbeb;
+    --block: #dc2626;
+    --block-bg: #fef2f2;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BANK HEADER ── */
+  .bank-header {
+    background: var(--primary);
+    color: white;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    box-shadow: 0 2px 8px rgba(0,48,135,0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .bank-logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .bank-logo-icon { width: 34px; height: 34px; background: linear-gradient(135deg, #ff6b00, #ffaa00); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: white; }
+  .bank-nav { display: flex; gap: 28px; font-size: 13px; font-weight: 500; opacity: 0.85; }
+  .bank-nav a { color: white; text-decoration: none; cursor: pointer; }
+  .bank-nav a:hover { opacity: 1; text-decoration: underline; }
+  .bank-user { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .bank-avatar { width: 32px; height: 32px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+
+  /* ── SECURITY RIBBON ── */
+  .sec-ribbon {
+    background: #002060;
+    color: rgba(255,255,255,0.75);
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 5px 40px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .sec-dot { width: 6px; height: 6px; background: #00b86b; border-radius: 50%; display: inline-block; margin-right: 4px; animation: blink 2s infinite; }
+  /* FraudShield badge in ribbon */
+  .fraud-shield-badge {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(99,102,241,0.25);
+    border: 1px solid rgba(165,180,252,0.4);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #a5b4fc;
+    letter-spacing: 0.5px;
+  }
+  .fraud-shield-badge::before { content: '●'; color: #a5b4fc; animation: blink 1.4s infinite; margin-right: 2px; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ── MAIN LAYOUT ── */
+  .main { flex: 1; display: grid; grid-template-columns: 260px 1fr 320px; max-width: 1400px; margin: 0 auto; width: 100%; padding: 24px 20px; gap: 20px; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; }
+  .account-card {
+    background: linear-gradient(145deg, #003087, #0050c8);
+    color: white; border-radius: 14px; padding: 20px;
+    position: relative; overflow: hidden; box-shadow: var(--shadow-lg);
+  }
+  .account-card::before { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .account-card::after { content: ''; position: absolute; bottom: -20px; left: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .acc-type { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; }
+  .acc-name { font-size: 15px; font-weight: 600; margin: 6px 0 2px; }
+  .acc-num { font-family: 'IBM Plex Mono', monospace; font-size: 12px; opacity: 0.7; }
+  .acc-balance-label { font-size: 10px; opacity: 0.65; margin-top: 16px; text-transform: uppercase; letter-spacing: 1px; }
+  .acc-balance { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .acc-ifsc { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.6; margin-top: 8px; }
+  .upi-badge { background: rgba(255,255,255,0.15); border-radius: 6px; padding: 6px 10px; font-size: 11px; margin-top: 10px; display: inline-block; backdrop-filter: blur(4px); }
+
+  .side-menu { background: var(--surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+  .side-menu-item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer; font-size: 13.5px; font-weight: 500; border-left: 3px solid transparent; transition: all 0.15s; border-bottom: 1px solid var(--border); }
+  .side-menu-item:last-child { border-bottom: none; }
+  .side-menu-item:hover { background: #f0f4ff; border-left-color: var(--primary-light); color: var(--primary); }
+  .side-menu-item.active { background: #eef2ff; border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+  .side-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* ── CENTER PANEL ── */
+  .center { display: flex; flex-direction: column; gap: 20px; }
+  .panel { background: var(--surface); border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
+  .panel-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface2); }
+  .panel-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .panel-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .panel-body { padding: 24px; }
+
+  /* ── FORM ── */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  input, select { padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background: white; transition: border-color 0.15s, box-shadow 0.15s; outline: none; }
+  input:focus, select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(0,80,200,0.08); }
+  input.mono { font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+  .upi-verify-row { display: flex; align-items: center; gap: 10px; }
+  .upi-verify-row input { flex: 1; }
+  .btn-verify { padding: 11px 18px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; white-space: nowrap; transition: background 0.15s; }
+  .btn-verify:hover { background: var(--primary-light); }
+
+  .verified-badge { display: none; align-items: center; gap: 6px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #166534; font-weight: 500; }
+  .verified-badge.show { display: flex; }
+
+  .amount-input-wrap { position: relative; }
+  .amount-input-wrap span { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 16px; font-weight: 700; color: var(--muted); }
+  .amount-input-wrap input { padding-left: 30px; font-size: 20px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+
+  .quick-amounts { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .quick-amt { padding: 5px 12px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--primary); transition: all 0.15s; background: white; }
+  .quick-amt:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .remark-group { margin-top: 16px; }
+  .remark-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .btn-pay { width: 100%; padding: 15px; background: linear-gradient(135deg, #003087, #0050c8); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; margin-top: 24px; letter-spacing: 0.3px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 16px rgba(0,48,135,0.35); }
+  .btn-pay:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,48,135,0.45); }
+
+  .upi-logos { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  .upi-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--muted); }
+
+  /* ── RIGHT PANEL ── */
+  .right { display: flex; flex-direction: column; gap: 16px; }
+  .txn-list { list-style: none; }
+  .txn-item { display: flex; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+  .txn-item:last-child { border-bottom: none; }
+  .txn-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .txn-icon.debit { background: #fef2f2; }
+  .txn-icon.credit { background: #f0fdf4; }
+  .txn-info { flex: 1; min-width: 0; }
+  .txn-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .txn-ref { font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+  .txn-amount { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; }
+  .txn-amount.debit { color: var(--danger); }
+  .txn-amount.credit { color: var(--accent2); }
+
+  .bank-network { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 16px; }
+  .net-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .net-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .net-row:last-child { border-bottom: none; }
+  .net-bank { font-weight: 600; color: var(--text); }
+  .net-status { display: flex; align-items: center; gap: 5px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .status-dot.ok { background: var(--accent2); }
+  .status-dot.slow { background: #f59e0b; }
+
+  /* ── QR ── */
+  .qr-action-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .btn-qr { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: all 0.15s; border: 2px solid transparent; }
+  .btn-qr-scan { background: #eef2ff; color: var(--primary); border-color: #c7d2fe; }
+  .btn-qr-scan:hover { background: var(--primary); color: white; border-color: var(--primary); }
+  .btn-qr-mycode { background: #f0fdf4; color: #166534; border-color: #86efac; }
+  .btn-qr-mycode:hover { background: var(--accent2); color: white; border-color: var(--accent2); }
+
+  /* ── MODAL BASE ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: white; border-radius: 20px; width: 360px; overflow: hidden; box-shadow: 0 20px 80px rgba(0,0,0,0.25); animation: modalIn 0.25s ease; }
+  @keyframes modalIn { from { opacity:0; transform:scale(0.9) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+  .modal-header { background: var(--primary); color: white; padding: 20px 24px; }
+  .modal-header h3 { font-size: 16px; font-weight: 700; }
+  .modal-header p { font-size: 12px; opacity: 0.75; margin-top: 3px; }
+  .modal-body { padding: 24px; }
+  .txn-summary { background: var(--surface2); border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
+  .txn-sum-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .txn-sum-row .label { color: var(--muted); }
+  .txn-sum-row .val { font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+  .txn-sum-row.total { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px; font-size: 15px; }
+  .txn-sum-row.total .val { color: var(--primary); font-size: 18px; }
+
+  .pin-label { font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 12px; color: var(--text); }
+  .pin-dots { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); transition: all 0.1s; }
+  .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .num-key { padding: 14px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px; font-size: 18px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.1s; font-family: 'IBM Plex Mono', monospace; color: var(--text); }
+  .num-key:hover { background: var(--primary); color: white; border-color: var(--primary); }
+  .num-key.del { font-size: 14px; }
+  .num-key.pay-now { background: var(--accent2); color: white; border-color: var(--accent2); font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; }
+  .num-key.pay-now:hover { background: #009955; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .btn-cancel { flex: 1; padding: 11px; border: 1.5px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; font-family: 'IBM Plex Sans', sans-serif; color: var(--muted); font-weight: 600; }
+
+  /* ── SUCCESS MODAL ── */
+  .success-modal { display: none; }
+  .success-modal.show { display: flex; }
+  .success-body { text-align: center; padding: 30px 24px; }
+  .success-icon { font-size: 60px; margin-bottom: 12px; animation: bounce 0.5s ease; }
+  @keyframes bounce { 0%{transform:scale(0)} 60%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  .success-title { font-size: 20px; font-weight: 800; color: var(--accent2); margin-bottom: 6px; }
+  .success-amt { font-family: 'IBM Plex Mono', monospace; font-size: 28px; font-weight: 800; color: var(--text); margin: 10px 0; }
+  .success-to { font-size: 14px; color: var(--muted); }
+  .success-ref { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 8px; padding: 6px 12px; background: var(--surface2); border-radius: 6px; display: inline-block; }
+  .success-time { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .btn-done { margin-top: 20px; width: 100%; padding: 14px; background: var(--accent2); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; }
+
+  /* ── LOADING ── */
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; flex-direction: column; color: white; gap: 16px; }
+  .loading-overlay.show { display: flex; }
+  .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 15px; font-weight: 500; opacity: 0.9; }
+  .loading-sub { font-size: 12px; opacity: 0.6; font-family: 'IBM Plex Mono', monospace; }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a1a2e; color: white; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; transition: all 0.3s; z-index: 9999; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .footer { background: var(--primary); color: rgba(255,255,255,0.5); text-align: center; font-size: 11px; padding: 12px; letter-spacing: 0.3px; }
+
+  /* ── QR SCANNER MODAL ── */
+  .qr-modal { width: 420px; }
+  .qr-modal .modal-header { background: linear-gradient(135deg, #1a1a2e, #003087); }
+  .qr-scanner-area { position: relative; width: 100%; aspect-ratio: 1; background: #0a0a0a; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+  .qr-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .qr-frame { width: 200px; height: 200px; position: relative; }
+  .qr-frame::before, .qr-frame::after { content: ''; position: absolute; width: 30px; height: 30px; border-color: #00e5ff; border-style: solid; }
+  .qr-frame::before { top:0; left:0; border-width: 3px 0 0 3px; }
+  .qr-frame::after  { bottom:0; right:0; border-width: 0 3px 3px 0; }
+  .qr-corner-tr, .qr-corner-bl { position: absolute; width: 30px; height: 30px; border-color: #00e5ff; border-style: solid; }
+  .qr-corner-tr { top:0; right:0; border-width: 3px 3px 0 0; }
+  .qr-corner-bl { bottom:0; left:0; border-width: 0 0 3px 3px; }
+  .qr-scanline { position: absolute; left: 10%; right: 10%; height: 2px; background: linear-gradient(90deg, transparent, #00e5ff, transparent); box-shadow: 0 0 8px #00e5ff; animation: scanMove 2s ease-in-out infinite; top: 10%; }
+  @keyframes scanMove { 0%{top:10%;opacity:1} 50%{top:85%;opacity:1} 100%{top:10%;opacity:1} }
+  .qr-status-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); padding: 10px 14px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.8); backdrop-filter: blur(4px); }
+  .qr-pulse { width: 8px; height: 8px; background: #00e5ff; border-radius: 50%; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+  .qr-sample-list { display: flex; flex-direction: column; gap: 8px; }
+  .qr-sample-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; font-size: 13px; }
+  .qr-sample-item:hover { border-color: var(--primary-light); background: #eef2ff; }
+  .qr-sample-icon { font-size: 22px; }
+  .qr-sample-name { font-weight: 600; color: var(--text); }
+  .qr-sample-upi { font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+  .qr-sample-amt { margin-left: auto; font-weight: 700; font-family: 'IBM Plex Mono', monospace; color: var(--primary); font-size: 13px; }
+  .qr-detected { display: none; background: linear-gradient(135deg, #0a1628, #003087); color: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; animation: modalIn 0.3s ease; }
+  .qr-detected.show { display: block; }
+  .qr-det-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.7; margin-bottom: 8px; }
+  .qr-det-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+  .qr-det-row .k { opacity: 0.65; }
+  .qr-det-row .v { font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+  .btn-qr-proceed { width: 100%; margin-top: 12px; padding: 12px; background: var(--accent2); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; }
+
+  /* ─────────────────────────────────────────────────────
+     FRAUDSHIELD MODAL — Full-screen overlay shown in-flow
+  ───────────────────────────────────────────────────── */
+  #fraudModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+  }
+  #fraudModal.show { display: flex; }
+
+  .fraud-card {
+    background: white;
+    border-radius: 20px;
+    width: 480px;
+    max-width: 96vw;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+    animation: modalIn 0.3s ease;
+  }
+
+  .fraud-header {
+    padding: 20px 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    border-radius: 20px 20px 0 0;
+  }
+  .fraud-shield-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .fraud-header-text h3 { font-size: 15px; font-weight: 700; color: var(--text); }
+  .fraud-header-text p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Scanning state */
+  .fraud-scanning {
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .fraud-scan-ring {
+    width: 80px; height: 80px;
+    border: 4px solid #e0e7ff;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 1s linear infinite;
+  }
+  .fraud-scan-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .fraud-scan-steps { display: flex; flex-direction: column; gap: 6px; }
+  .fraud-scan-step { font-size: 12px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+  .fraud-scan-step.active { color: #4f46e5; font-weight: 600; }
+  .fraud-scan-step.done { color: var(--accent2); }
+
+  /* Result states */
+  .fraud-result { padding: 20px 24px; display: none; }
+  .fraud-result.show { display: block; }
+
+  /* Decision banner */
+  .fraud-decision {
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1.5px solid;
+  }
+  .fraud-decision.allow { background: var(--allow-bg); border-color: #86efac; }
+  .fraud-decision.otp { background: var(--otp-bg); border-color: #fcd34d; }
+  .fraud-decision.block { background: var(--block-bg); border-color: #fca5a5; }
+  .fraud-decision-icon { font-size: 28px; flex-shrink: 0; }
+  .fraud-decision-title { font-size: 15px; font-weight: 800; }
+  .fraud-decision.allow .fraud-decision-title { color: #065f46; }
+  .fraud-decision.otp .fraud-decision-title { color: #92400e; }
+  .fraud-decision.block .fraud-decision-title { color: #991b1b; }
+  .fraud-decision-sub { font-size: 12px; margin-top: 2px; color: var(--muted); }
+
+  /* Score bar */
+  .fraud-score-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .fraud-score-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .fraud-score-bar-bg { flex: 1; height: 8px; background: var(--border); border-radius: 10px; overflow: hidden; }
+  .fraud-score-bar-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
+  .fraud-score-value { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+  /* Factor pills */
+  .fraud-factors { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .fraud-pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+  .fraud-pill.high { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+  .fraud-pill.med { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+  .fraud-pill.low { background: #f0fdf4; color: #065f46; border: 1px solid #86efac; }
+
+  /* AI explanation */
+  .fraud-ai-box {
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .fraud-ai-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #4f46e5; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .fraud-ai-text { font-size: 13px; line-height: 1.7; color: var(--text); }
+  .fraud-ai-text strong { color: #1e1b4b; }
+
+  /* OTP input inside fraud modal */
+  .fraud-otp-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .fraud-otp-input { flex: 1; padding: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 18px; letter-spacing: 8px; text-align: center; border: 1.5px solid var(--border); border-radius: 8px; outline: none; }
+  .fraud-otp-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+
+  /* Action buttons */
+  .fraud-actions { display: flex; gap: 10px; }
+  .fraud-btn { flex: 1; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; border: none; transition: all 0.15s; }
+  .fraud-btn-proceed { background: var(--accent2); color: white; }
+  .fraud-btn-proceed:hover { background: #009955; }
+  .fraud-btn-proceed:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+  .fraud-btn-cancel { background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border); }
+  .fraud-btn-cancel:hover { background: var(--border); }
+  .fraud-btn-block { background: var(--block-bg); color: #991b1b; border: 1.5px solid #fca5a5; }
+
+  /* My QR */
+  .myqr-modal { width: 380px; }
+  .myqr-body { padding: 24px; text-align: center; }
+  .myqr-canvas-wrap { background: white; border-radius: 16px; padding: 20px; display: inline-block; box-shadow: 0 4px 24px rgba(0,0,0,0.1); border: 1px solid var(--border); margin-bottom: 16px; position: relative; }
+  .myqr-canvas-wrap canvas { display: block; }
+  .myqr-logo-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .myqr-upi { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+  .myqr-name { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .myqr-actions { display: flex; gap: 8px; justify-content: center; }
+  .btn-myqr-action { padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; border: 1.5px solid var(--border); background: white; color: var(--text); transition: all 0.15s; }
+  .btn-myqr-action:hover { background: var(--surface2); }
+  .btn-myqr-action.primary { background: var(--primary); color: white; border-color: var(--primary); }
+  .btn-myqr-action.primary:hover { background: var(--primary-light); }
+  .myqr-amount-row { display: flex; gap: 8px; align-items: center; background: var(--surface2); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
+  .myqr-amount-row span { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .myqr-amount-row input { flex: 1; border: none; background: transparent; font-size: 16px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; color: var(--text); outline: none; }
+
+  /* Typing cursor */
+  .typing-cursor { animation: blink 0.8s step-end infinite; }
+</style>
+</head>
+<body>
+
+<!-- BANK HEADER -->
+<header class="bank-header">
+  <div class="bank-logo">
+    <div class="bank-logo-icon">N</div>
+    NexPay Bank
+  </div>
+  <nav class="bank-nav">
+    <a>Dashboard</a>
+    <a>Accounts</a>
+    <a style="opacity:1;text-decoration:underline;text-underline-offset:3px">Payments</a>
+    <a>Fixed Deposits</a>
+    <a>Support</a>
+  </nav>
+  <div class="bank-user">
+    <div class="bank-avatar">MA</div>
+    <span>Manisha Agarwal</span>
+  </div>
+</header>
+
+<!-- SECURITY RIBBON -->
+<div class="sec-ribbon">
+  <span><span class="sec-dot"></span> Secure Session Active</span>
+  <span>🔒 256-bit SSL Encrypted</span>
+  <span>Session ID: NX-2026-04-05-8821</span>
+  <div class="fraud-shield-badge">🛡 FraudShield AI — Monitoring Every Transaction</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="account-card">
+      <div class="acc-type">Savings Account</div>
+      <div class="acc-name">Manisha Agarwal</div>
+      <div class="acc-num">•••• •••• 4892</div>
+      <div class="acc-balance-label">Available Balance</div>
+      <div class="acc-balance" id="sideBalance">₹82,450.00</div>
+      <div class="acc-ifsc">IFSC: NEXP0001234 · MICR: 110001234</div>
+      <div class="upi-badge">📱 manisha.agarwal@nexpay</div>
+    </div>
+    <div class="side-menu">
+      <div class="side-menu-item"><span class="side-icon">🔀</span> UPI Transfer</div>
+      <div class="side-menu-item active"><span class="side-icon">💸</span> Pay / Send Money</div>
+      <div class="side-menu-item"><span class="side-icon">📥</span> Request Money</div>
+      <div class="side-menu-item"><span class="side-icon">🏦</span> Bank Transfer (NEFT)</div>
+      <div class="side-menu-item"><span class="side-icon">⚡</span> RTGS Transfer</div>
+      <div class="side-menu-item"><span class="side-icon">📋</span> Transaction History</div>
+      <div class="side-menu-item"><span class="side-icon">🔔</span> Manage Alerts</div>
+    </div>
+  </aside>
+
+  <!-- CENTER -->
+  <main class="center">
+
+    <!-- UPI FORM -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">UPI Payment — Send Money</div>
+          <div class="panel-sub">Powered by NPCI · Instant 24×7 transfer · <strong style="color:#4f46e5">🛡 FraudShield AI</strong> active</div>
+        </div>
+        <div style="font-size:22px">⚡</div>
+      </div>
+      <div class="panel-body">
+
+        <!-- QR BUTTONS -->
+        <div class="qr-action-row">
+          <button class="btn-qr btn-qr-scan" onclick="openQRScanner()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 14v3h3M14 17h3"/></svg>
+            Scan QR to Pay
+          </button>
+          <button class="btn-qr btn-qr-mycode" onclick="openMyQR()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Show My QR Code
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+          <span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px">or enter manually</span>
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Your UPI ID (From)</label>
+            <input type="text" value="manisha.agarwal@nexpay" class="mono" readonly style="background:#f8f9fb;color:#6b7280">
+          </div>
+          <div class="form-group">
+            <label>Linked Bank Account</label>
+            <select>
+              <option>Savings •••4892 — NexPay Bank</option>
+              <option>Current •••0021 — NexPay Bank</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full" style="margin-bottom:12px">
+          <label>Recipient UPI ID</label>
+          <div class="upi-verify-row">
+            <input type="text" id="recipientUPI" class="mono" placeholder="e.g. rahul@hdfc, 9876543210@paytm" oninput="resetVerify()">
+            <button class="btn-verify" onclick="verifyUPI()">Verify →</button>
+          </div>
+          <div class="verified-badge" id="verifiedBadge">
+            ✅ <strong id="verifiedName">—</strong> · Account Verified
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:16px">
+          <div class="form-group">
+            <label>Amount (₹)</label>
+            <div class="amount-input-wrap">
+              <span>₹</span>
+              <input type="number" id="amountInput" placeholder="0.00" min="1" oninput="updateAmount()">
+            </div>
+            <div class="quick-amounts">
+              <div class="quick-amt" onclick="setAmt(500)">₹500</div>
+              <div class="quick-amt" onclick="setAmt(1000)">₹1,000</div>
+              <div class="quick-amt" onclick="setAmt(2500)">₹2,500</div>
+              <div class="quick-amt" onclick="setAmt(5000)">₹5,000</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Payment Type</label>
+            <select id="payType">
+              <option>Personal Transfer</option>
+              <option>Bill Payment</option>
+              <option>Shopping / Merchant</option>
+              <option>Loan Repayment</option>
+              <option>Investment</option>
+            </select>
+            <div style="margin-top:10px">
+              <label>Priority</label>
+              <select>
+                <option>IMPS (Instant)</option>
+                <option>UPI (Default)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group remark-group">
+          <label>Remarks / Note (Optional)</label>
+          <input type="text" id="remarkInput" placeholder="e.g. Rent for April, Dinner split...">
+          <div class="remark-hint">This message will be visible to the recipient</div>
+        </div>
+
+        <button class="btn-pay" onclick="initiatePay()">
+          🔐 Proceed to Pay Securely
+        </button>
+
+        <div class="upi-logos">
+          <span>Powered by</span>
+          <div class="upi-chip">UPI</div>
+          <div class="upi-chip">NPCI</div>
+          <div class="upi-chip">IMPS</div>
+          <span>·</span>
+          <div class="upi-chip" style="background:#eef2ff;color:#4f46e5;border-color:#c7d2fe">🛡 FraudShield</div>
+          <span>· RBI Regulated</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RECENT TRANSACTIONS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Recent Transactions</div>
+        <div style="font-size:12px;color:var(--primary);font-weight:600;cursor:pointer">View All →</div>
+      </div>
+      <div class="panel-body" style="padding:16px 24px">
+        <ul class="txn-list" id="txnList">
+          <li class="txn-item">
+            <div class="txn-icon debit">🛒</div>
+            <div class="txn-info"><div class="txn-name">Amazon India</div><div class="txn-ref">TXN240405001 · amazon@icici · ✅ Fraud: Clear</div></div>
+            <div><div class="txn-amount debit">−₹1,899</div><div style="font-size:11px;color:var(--muted);text-align:right">Today</div></div>
+          </li>
+          <li class="txn-item">
+            <div class="txn-icon credit">📥</div>
+            <div class="txn-info"><div class="txn-name">Salary Credit — NexCorp</div><div class="txn-ref">TXN240401009 · nexpay NEFT</div></div>
+            <div><div class="txn-amount credit">+₹55,000</div><div style="font-size:11px;color:var(--muted);text-align:right">Apr 1</div></div>
+          </li>
+          <li class="txn-item">
+            <div class="txn-icon debit">⚡</div>
+            <div class="txn-info"><div class="txn-name">BSES Electricity Bill</div><div class="txn-ref">TXN240331087 · bbps@bses · ✅ Fraud: Clear</div></div>
+            <div><div class="txn-amount debit">−₹2,340</div><div style="font-size:11px;color:var(--muted);text-align:right">Mar 31</div></div>
+          </li>
+          <li class="txn-item">
+            <div class="txn-icon debit">🍕</div>
+            <div class="txn-info"><div class="txn-name">Rohit Sharma</div><div class="txn-ref">TXN240330044 · rohit@paytm · ✅ Fraud: Clear</div></div>
+            <div><div class="txn-amount debit">−₹450</div><div style="font-size:11px;color:var(--muted);text-align:right">Mar 30</div></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside class="right">
+
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">UPI Daily Limits</div></div>
+      <div class="panel-body" style="padding:16px">
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+            <span style="color:var(--muted);font-weight:600">Daily Limit Used</span>
+            <span style="font-weight:700;font-family:'IBM Plex Mono',monospace" id="limitUsed">₹4,689 / ₹1,00,000</span>
+          </div>
+          <div style="background:var(--border);border-radius:10px;height:8px;overflow:hidden">
+            <div id="limitBar" style="width:4.7%;height:100%;background:linear-gradient(90deg,var(--accent2),#00d980);border-radius:10px;transition:width 0.5s"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:5px">Resets at midnight IST</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--surface2);border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase">Per Txn Limit</div>
+            <div style="font-weight:700;font-size:14px;font-family:'IBM Plex Mono',monospace;margin-top:3px">₹1,00,000</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase">Txns Today</div>
+            <div style="font-weight:700;font-size:14px;font-family:'IBM Plex Mono',monospace;margin-top:3px" id="txnCount">3 / 20</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bank-network">
+      <div class="net-title">🏦 Bank Network Status</div>
+      <div class="net-row"><span class="net-bank">NexPay Bank</span><div class="net-status"><div class="status-dot ok"></div><span style="font-size:11px;color:var(--accent2)">Operational</span></div></div>
+      <div class="net-row"><span class="net-bank">SBI</span><div class="net-status"><div class="status-dot ok"></div><span style="font-size:11px;color:var(--accent2)">Operational</span></div></div>
+      <div class="net-row"><span class="net-bank">HDFC Bank</span><div class="net-status"><div class="status-dot ok"></div><span style="font-size:11px;color:var(--accent2)">Operational</span></div></div>
+      <div class="net-row"><span class="net-bank">ICICI Bank</span><div class="net-status"><div class="status-dot slow"></div><span style="font-size:11px;color:#f59e0b">Slow Response</span></div></div>
+      <div class="net-row"><span class="net-bank">Axis Bank</span><div class="net-status"><div class="status-dot ok"></div><span style="font-size:11px;color:var(--accent2)">Operational</span></div></div>
+      <div class="net-row"><span class="net-bank">Kotak Mahindra</span><div class="net-status"><div class="status-dot ok"></div><span style="font-size:11px;color:var(--accent2)">Operational</span></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Frequent Recipients</div></div>
+      <div class="panel-body" style="padding:12px 16px">
+        <div class="txn-item" style="cursor:pointer" onclick="fillRecipient('rohit.sharma@hdfc','Rohit Sharma')">
+          <div class="txn-icon debit" style="background:#eff6ff">👤</div>
+          <div class="txn-info"><div class="txn-name">Rohit Sharma</div><div class="txn-ref">rohit.sharma@hdfc</div></div>
+          <span style="color:var(--primary);font-size:11px;font-weight:600">Send →</span>
+        </div>
+        <div class="txn-item" style="cursor:pointer" onclick="fillRecipient('priya.m@paytm','Priya Mehta')">
+          <div class="txn-icon debit" style="background:#fdf4ff">👤</div>
+          <div class="txn-info"><div class="txn-name">Priya Mehta</div><div class="txn-ref">priya.m@paytm</div></div>
+          <span style="color:var(--primary);font-size:11px;font-weight:600">Send →</span>
+        </div>
+        <div class="txn-item" style="cursor:pointer;border-bottom:none" onclick="fillRecipient('aman@sbi','Aman Kumar')">
+          <div class="txn-icon credit" style="background:#f0fdf4">👤</div>
+          <div class="txn-info"><div class="txn-name">Aman Kumar</div><div class="txn-ref">aman@sbi</div></div>
+          <span style="color:var(--primary);font-size:11px;font-weight:600">Send →</span>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+</div>
+
+<footer class="footer">
+  NexPay Bank Ltd. · FDIC Insured · RBI Regulated · © 2026 · <strong style="color:rgba(255,255,255,0.7)">Prototype Demo — No Real Transactions</strong> · 🛡 FraudShield AI Integrated
+</footer>
+
+<!-- ── UPI PIN MODAL ── -->
+<div class="modal-overlay" id="pinModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🔐 Authenticate Payment</h3>
+      <p>Enter your 4-digit UPI PIN to confirm</p>
+    </div>
+    <div class="modal-body">
+      <div class="txn-summary">
+        <div class="txn-sum-row"><span class="label">To</span><span class="val" id="sum-to">—</span></div>
+        <div class="txn-sum-row"><span class="label">UPI ID</span><span class="val" id="sum-upi">—</span></div>
+        <div class="txn-sum-row"><span class="label">Remark</span><span class="val" id="sum-remark">—</span></div>
+        <div class="txn-sum-row total"><span class="label">Amount</span><span class="val" id="sum-amount">—</span></div>
+      </div>
+      <div class="pin-label">Enter UPI PIN (try: 1234)</div>
+      <div class="pin-dots">
+        <div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div>
+        <div class="pin-dot" id="d3"></div>
+        <div class="pin-dot" id="d4"></div>
+      </div>
+      <div class="numpad">
+        <div class="num-key" onclick="pinKey(1)">1</div>
+        <div class="num-key" onclick="pinKey(2)">2</div>
+        <div class="num-key" onclick="pinKey(3)">3</div>
+        <div class="num-key" onclick="pinKey(4)">4</div>
+        <div class="num-key" onclick="pinKey(5)">5</div>
+        <div class="num-key" onclick="pinKey(6)">6</div>
+        <div class="num-key" onclick="pinKey(7)">7</div>
+        <div class="num-key" onclick="pinKey(8)">8</div>
+        <div class="num-key" onclick="pinKey(9)">9</div>
+        <div class="num-key del" onclick="pinDel()">⌫</div>
+        <div class="num-key" onclick="pinKey(0)">0</div>
+        <div class="num-key pay-now" onclick="submitPIN()">PAY</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closePinModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FRAUDSHIELD AI MODAL (shown after PIN, before processing) ── -->
+<div id="fraudModal">
+  <div class="fraud-card">
+
+    <!-- Header -->
+    <div class="fraud-header">
+      <div class="fraud-shield-icon">🛡</div>
+      <div class="fraud-header-text">
+        <h3>FraudShield AI — Transaction Analysis</h3>
+        <p>Scanning this payment for fraud signals before processing</p>
+      </div>
+    </div>
+
+    <!-- Scanning state -->
+    <div class="fraud-scanning" id="fraudScanning">
+      <div class="fraud-scan-ring"></div>
+      <div class="fraud-scan-title">Analyzing Transaction…</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Please wait while FraudShield AI reviews this payment</div>
+      <div class="fraud-scan-steps">
+        <div class="fraud-scan-step" id="fstep0">◆ Extracting transaction signals…</div>
+        <div class="fraud-scan-step" id="fstep1">◆ Running ensemble risk model…</div>
+        <div class="fraud-scan-step" id="fstep2">◆ Checking recipient reputation…</div>
+        <div class="fraud-scan-step" id="fstep3">◆ Generating AI explanation…</div>
+      </div>
+    </div>
+
+    <!-- Result (shown after scan) -->
+    <div class="fraud-result" id="fraudResult">
+
+      <!-- Decision banner -->
+      <div class="fraud-decision" id="fraudDecisionBanner">
+        <div class="fraud-decision-icon" id="fraudDecisionIcon"></div>
+        <div>
+          <div class="fraud-decision-title" id="fraudDecisionTitle"></div>
+          <div class="fraud-decision-sub" id="fraudDecisionSub"></div>
+        </div>
+      </div>
+
+      <!-- Score bar -->
+      <div class="fraud-score-row">
+        <span class="fraud-score-label">Risk Score</span>
+        <div class="fraud-score-bar-bg">
+          <div class="fraud-score-bar-fill" id="fraudScoreBar" style="width:0%"></div>
+        </div>
+        <span class="fraud-score-value" id="fraudScoreVal">0.00</span>
+      </div>
+
+      <!-- Signal pills -->
+      <div class="fraud-factors" id="fraudPills"></div>
+
+      <!-- AI Explanation -->
+      <div class="fraud-ai-box">
+        <div class="fraud-ai-label">🤖 Claude AI Explanation</div>
+        <div class="fraud-ai-text" id="fraudAIText"><span style="color:var(--muted)">Generating<span class="typing-cursor">|</span></span></div>
+      </div>
+
+      <!-- OTP field (only for OTP decision) -->
+      <div id="fraudOTPSection" style="display:none;margin-bottom:14px">
+        <label style="margin-bottom:8px;display:block">Enter OTP sent to your registered number</label>
+        <div class="fraud-otp-row">
+          <input type="text" class="fraud-otp-input" id="fraudOTPInput" maxlength="6" placeholder="• • • • • •">
+          <button class="fraud-btn fraud-btn-proceed" onclick="verifyFraudOTP()" style="flex:none;padding:12px 20px">Verify</button>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="fraud-actions" id="fraudActions"></div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SUCCESS MODAL ── -->
+<div class="modal-overlay success-modal" id="successModal">
+  <div class="modal">
+    <div class="success-body">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Payment Successful!</div>
+      <div class="success-amt" id="suc-amt">₹—</div>
+      <div class="success-to">Sent to <strong id="suc-to">—</strong></div>
+      <div class="success-ref" id="suc-ref">TXN —</div>
+      <div class="success-time" id="suc-time">—</div>
+      <div id="suc-fraud-badge" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #86efac;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;color:#065f46">🛡 FraudShield: Verified Safe</div>
+      <button class="btn-done" onclick="donePayment()">✓ Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOADING OVERLAY ── -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Processing…</div>
+  <div class="loading-sub" id="loadingSub"></div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── QR SCANNER MODAL ── -->
+<div class="modal-overlay" id="qrScanModal">
+  <div class="modal qr-modal">
+    <div class="modal-header">
+      <h3>📷 Scan QR Code</h3>
+      <p>Point camera at any UPI QR code to pay instantly</p>
+    </div>
+    <div class="modal-body">
+      <div class="qr-scanner-area" id="scannerArea">
+        <svg width="100%" height="100%" style="position:absolute;inset:0;opacity:0.15">
+          <defs><pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="#00e5ff" stroke-width="0.5"/></pattern></defs>
+          <rect width="100%" height="100%" fill="url(#grid)"/>
+        </svg>
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, rgba(0,20,60,0.4) 0%, rgba(0,0,0,0.85) 100%)"></div>
+        <div class="qr-overlay">
+          <div class="qr-frame">
+            <div class="qr-corner-tr"></div><div class="qr-corner-bl"></div>
+            <div class="qr-scanline"></div>
+          </div>
+        </div>
+        <div class="qr-status-bar"><div class="qr-pulse"></div><span id="scannerStatusText">Scanning for QR Code…</span></div>
+      </div>
+      <div class="qr-detected" id="qrDetected">
+        <div class="qr-det-title">✅ QR Code Detected</div>
+        <div class="qr-det-row"><span class="k">Merchant / Person</span><span class="v" id="qr-det-name">—</span></div>
+        <div class="qr-det-row"><span class="k">UPI ID</span><span class="v" id="qr-det-upi">—</span></div>
+        <div class="qr-det-row"><span class="k">Amount</span><span class="v" id="qr-det-amt">—</span></div>
+        <div class="qr-det-row"><span class="k">Category</span><span class="v" id="qr-det-cat">—</span></div>
+        <button class="btn-qr-proceed" onclick="proceedFromQR()">Proceed to Pay →</button>
+      </div>
+      <div id="sampleQRSection">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">📱 Simulate — Tap a QR to Scan:</div>
+        <div class="qr-sample-list">
+          <div class="qr-sample-item" onclick="simulateScan('Swiggy','swiggy@icici','₹349','Food Delivery')">
+            <div class="qr-sample-icon">🍔</div>
+            <div><div class="qr-sample-name">Swiggy</div><div class="qr-sample-upi">swiggy@icici</div></div>
+            <div class="qr-sample-amt">₹349</div>
+          </div>
+          <div class="qr-sample-item" onclick="simulateScan('Reliance Fresh','reliancefresh@hdfc','₹1,240','Grocery')">
+            <div class="qr-sample-icon">🛒</div>
+            <div><div class="qr-sample-name">Reliance Fresh</div><div class="qr-sample-upi">reliancefresh@hdfc</div></div>
+            <div class="qr-sample-amt">₹1,240</div>
+          </div>
+          <div class="qr-sample-item" onclick="simulateScan('Priya Mehta','priya.m@paytm','Any Amount','Personal')">
+            <div class="qr-sample-icon">👤</div>
+            <div><div class="qr-sample-name">Priya Mehta</div><div class="qr-sample-upi">priya.m@paytm</div></div>
+            <div class="qr-sample-amt">Any Amt</div>
+          </div>
+          <div class="qr-sample-item" onclick="simulateScan('lottery.prize.winner','lottery.prize.winner@upi','₹1','Unknown')">
+            <div class="qr-sample-icon">⚠️</div>
+            <div><div class="qr-sample-name">Lottery Prize (Suspicious)</div><div class="qr-sample-upi">lottery.prize.winner@upi</div></div>
+            <div class="qr-sample-amt">₹1</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions"><button class="btn-cancel" onclick="closeQRScanner()">Close</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MY QR CODE MODAL ── -->
+<div class="modal-overlay" id="myQRModal">
+  <div class="modal myqr-modal">
+    <div class="modal-header"><h3>📱 My QR Code</h3><p>Share this QR to receive UPI payments</p></div>
+    <div class="myqr-body">
+      <div class="myqr-amount-row">
+        <span>₹</span>
+        <input type="number" id="myQRAmount" placeholder="Enter amount (optional)" oninput="regenerateQR()">
+      </div>
+      <div class="myqr-canvas-wrap">
+        <canvas id="myQRCanvas" width="200" height="200"></canvas>
+        <div class="myqr-logo-center">N</div>
+      </div>
+      <div class="myqr-upi">manisha.agarwal@nexpay</div>
+      <div class="myqr-name">Manisha Agarwal · NexPay Bank</div>
+      <div class="myqr-actions">
+        <button class="btn-myqr-action" onclick="shareQR()">📤 Share</button>
+        <button class="btn-myqr-action primary" onclick="closeMyQR()">✓ Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── STATE ─── */
+let balance = 82450, limitUsed = 4689, txnCount = 3;
+let currentAmt = 0, currentUPI = '', currentName = '';
+let pin = '';
+let fraudDecision = null;  // stores result from fraud check
+
+/* ─── TOAST ─── */
+function showToast(msg, dur = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+/* ─── UPI VERIFY ─── */
+const knownUPIs = {
+  'amazon@icici': 'Amazon India', 'swiggy@icici': 'Swiggy', 'netflix@razorpay': 'Netflix',
+  'rohit.sharma@hdfc': 'Rohit Sharma', 'priya.m@paytm': 'Priya Mehta', 'aman@sbi': 'Aman Kumar',
+  'reliancefresh@hdfc': 'Reliance Fresh', 'bbps@bses': 'BSES Rajdhani', 'paytm@paytm': 'Paytm',
+  'lottery.prize.winner@upi': 'Unknown / Suspicious'
+};
+
+function verifyUPI() {
+  const upi = document.getElementById('recipientUPI').value.trim().toLowerCase();
+  if (!upi || !upi.includes('@')) { showToast('⚠️ Enter a valid UPI ID'); return; }
+  const name = knownUPIs[upi] || guessName(upi);
+  document.getElementById('verifiedName').textContent = name;
+  document.getElementById('verifiedBadge').classList.add('show');
+  currentUPI = upi;
+  currentName = name;
+  showToast('✅ Verified: ' + name);
+}
+
+function resetVerify() {
+  document.getElementById('verifiedBadge').classList.remove('show');
+  currentUPI = '';
+  currentName = '';
+}
+
+function guessName(upi) {
+  const part = upi.split('@')[0];
+  return part.split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function setAmt(v) { document.getElementById('amountInput').value = v; currentAmt = v; }
+function updateAmount() { currentAmt = parseFloat(document.getElementById('amountInput').value) || 0; }
+
+function fillRecipient(upiId, name) {
+  document.getElementById('recipientUPI').value = upiId;
+  document.getElementById('verifiedName').textContent = name;
+  document.getElementById('verifiedBadge').classList.add('show');
+  currentUPI = upiId;
+  currentName = name;
+  showToast('📋 Recipient filled: ' + name);
+}
+
+/* ─── INITIATE PAY → PIN ─── */
+function initiatePay() {
+  const upi = document.getElementById('recipientUPI').value.trim();
+  const amt = parseFloat(document.getElementById('amountInput').value);
+  if (!upi || !upi.includes('@')) { showToast('⚠️ Please enter a valid UPI ID'); return; }
+  if (!document.getElementById('verifiedBadge').classList.contains('show')) { showToast('⚠️ Please verify the UPI ID first'); return; }
+  if (!amt || amt < 1) { showToast('⚠️ Enter a valid amount (min ₹1)'); return; }
+  if (amt > balance) { showToast('❌ Insufficient balance'); return; }
+  if (amt > 100000) { showToast('❌ Exceeds per-transaction limit of ₹1,00,000'); return; }
+
+  currentAmt = amt;
+  currentUPI = upi;
+  currentName = document.getElementById('verifiedName').textContent;
+
+  const remark = document.getElementById('remarkInput').value || 'No remark';
+  document.getElementById('sum-to').textContent = currentName;
+  document.getElementById('sum-upi').textContent = currentUPI;
+  document.getElementById('sum-remark').textContent = remark;
+  document.getElementById('sum-amount').textContent = '₹' + amt.toLocaleString('en-IN', {minimumFractionDigits:2});
+
+  pin = '';
+  updatePinDots();
+  document.getElementById('pinModal').classList.add('show');
+}
+
+function closePinModal() { document.getElementById('pinModal').classList.remove('show'); pin = ''; updatePinDots(); }
+
+function pinKey(n) {
+  if (pin.length < 4) {
+    pin += n; updatePinDots();
+    if (pin.length === 4) setTimeout(submitPIN, 200);
+  }
+}
+function pinDel() { pin = pin.slice(0, -1); updatePinDots(); }
+function updatePinDots() {
+  for (let i = 1; i <= 4; i++)
+    document.getElementById('d' + i).classList.toggle('filled', i <= pin.length);
+}
+
+function submitPIN() {
+  if (pin.length < 4) { showToast('⚠️ Enter all 4 digits'); return; }
+  if (pin !== '1234') {
+    showToast('❌ Wrong PIN. Try 1234'); pin = ''; updatePinDots(); return;
+  }
+  // PIN correct → close PIN modal → run FraudShield
+  closePinModal();
+  runFraudCheck();
+}
+
+/* ════════════════════════════════════════════════════════
+   FRAUDSHIELD AI — Embedded inline fraud check
+════════════════════════════════════════════════════════ */
+function runFraudCheck() {
+  // Reset modal to scanning state
+  document.getElementById('fraudScanning').style.display = 'block';
+  document.getElementById('fraudResult').classList.remove('show');
+  document.getElementById('fraudAIText').innerHTML = '<span style="color:var(--muted)">Generating<span class="typing-cursor">|</span></span>';
+
+  // Reset scan steps
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('fstep' + i);
+    el.classList.remove('active', 'done');
+  }
+
+  document.getElementById('fraudModal').classList.add('show');
+
+  // Animate steps
+  let stepIdx = 0;
+  const stepInterval = setInterval(() => {
+    if (stepIdx > 0) document.getElementById('fstep' + (stepIdx-1)).className = 'fraud-scan-step done';
+    if (stepIdx < 4) document.getElementById('fstep' + stepIdx).classList.add('active');
+    stepIdx++;
+    if (stepIdx > 4) clearInterval(stepInterval);
+  }, 500);
+
+  // Build transaction context from the payment form
+  const payType = document.getElementById('payType').options[document.getElementById('payType').selectedIndex].text;
+  const hour = new Date().getHours();
+  const timeLabel = hour >= 6 && hour < 12 ? 'Morning (6AM–12PM)'
+    : hour >= 12 && hour < 18 ? 'Afternoon (12PM–6PM)'
+    : hour >= 18 && hour < 22 ? 'Evening (6PM–10PM)'
+    : 'Late Night (10PM–2AM)';
+
+  const txn = {
+    sender: 'manisha.agarwal@nexpay',
+    recipient: currentUPI,
+    amount: currentAmt,
+    type: payType,
+    time: timeLabel,
+    location: 'Same City (Delhi)',
+    device: 'Known Device (Trusted)',
+    velocity: txnCount,
+    avg_spend: 15000,
+    known: isKnownRecipient(currentUPI) ? 'Yes — Transacted Before' : 'No — First Time',
+    network: '4G / Home WiFi',
+    recip_age: isKnownRecipient(currentUPI) ? 'Established (2+ years)' : 'Moderate (6–24 months)'
+  };
+
+  // Check for phishing patterns
+  const phishPatterns = ['lottery', 'prize', 'winner', 'free', 'gift', 'reward', 'claim', 'unknown'];
+  if (phishPatterns.some(p => currentUPI.toLowerCase().includes(p))) {
+    txn.known = 'Reported as Fraud';
+    txn.recip_age = 'Very New (< 30 days)';
+    txn.location = 'VPN Detected';
+  }
+  // High amount relative to avg
+  if (currentAmt > 30000) { txn.device = 'New Device (First Use)'; }
+
+  // Compute fraud score locally
+  const factors = computeFactors(txn);
+  const riskScore = computeRiskScore(factors);
+  const decision = riskScore < 0.35 ? 'ALLOW' : riskScore < 0.65 ? 'OTP' : 'BLOCK';
+  fraudDecision = decision;
+
+  // Show results after scanning animation
+  setTimeout(() => {
+    document.getElementById('fraudScanning').style.display = 'none';
+    document.getElementById('fraudResult').classList.add('show');
+    renderFraudResult(factors, riskScore, decision, txn);
+    getClaudeExplanation(txn, factors, riskScore, decision);
+  }, 2200);
+}
+
+function isKnownRecipient(upi) {
+  const known = ['amazon@icici','swiggy@icici','netflix@razorpay','rohit.sharma@hdfc',
+                  'priya.m@paytm','aman@sbi','reliancefresh@hdfc','bbps@bses','paytm@paytm'];
+  return known.includes(upi.toLowerCase());
+}
+
+function renderFraudResult(factors, score, decision, txn) {
+  // Decision banner
+  const banner = document.getElementById('fraudDecisionBanner');
+  const configs = {
+    ALLOW: { cls:'allow', icon:'✅', title:'Transaction Looks Safe', sub:'No significant fraud signals detected. You may proceed.' },
+    OTP:   { cls:'otp',   icon:'⚠️', title:'Unusual Activity Detected', sub:'Additional OTP verification required before processing.' },
+    BLOCK: { cls:'block', icon:'🚫', title:'High Fraud Risk — Blocked', sub:'This transaction matches known fraud patterns. Please do not proceed.' }
+  };
+  const c = configs[decision];
+  banner.className = 'fraud-decision ' + c.cls;
+  document.getElementById('fraudDecisionIcon').textContent = c.icon;
+  document.getElementById('fraudDecisionTitle').textContent = c.title;
+  document.getElementById('fraudDecisionSub').textContent = c.sub;
+
+  // Score bar
+  const barColors = { ALLOW: '#059669', OTP: '#d97706', BLOCK: '#dc2626' };
+  document.getElementById('fraudScoreBar').style.width = (score * 100) + '%';
+  document.getElementById('fraudScoreBar').style.background = barColors[decision];
+  document.getElementById('fraudScoreVal').textContent = score.toFixed(3);
+  document.getElementById('fraudScoreVal').style.color = barColors[decision];
+
+  // Signal pills
+  const pillsEl = document.getElementById('fraudPills');
+  pillsEl.innerHTML = '';
+  Object.values(factors).forEach(f => {
+    const cls = f.score > 0.65 ? 'high' : f.score > 0.35 ? 'med' : 'low';
+    const icon = f.score > 0.65 ? '⚠' : f.score > 0.35 ? '▲' : '✓';
+    const pill = document.createElement('span');
+    pill.className = 'fraud-pill ' + cls;
+    pill.textContent = icon + ' ' + f.label;
+    pill.title = f.desc;
+    pillsEl.appendChild(pill);
+  });
+
+  // OTP section
+  document.getElementById('fraudOTPSection').style.display = decision === 'OTP' ? 'block' : 'none';
+  document.getElementById('fraudOTPInput').value = '';
+
+  // Action buttons
+  const actionsEl = document.getElementById('fraudActions');
+  if (decision === 'ALLOW') {
+    actionsEl.innerHTML = `
+      <button class="fraud-btn fraud-btn-cancel" onclick="cancelFraud()">Cancel</button>
+      <button class="fraud-btn fraud-btn-proceed" onclick="proceedAfterFraud()">✓ Confirm & Pay ₹${currentAmt.toLocaleString('en-IN')}</button>`;
+  } else if (decision === 'OTP') {
+    actionsEl.innerHTML = `
+      <button class="fraud-btn fraud-btn-cancel" onclick="cancelFraud()">Cancel Payment</button>
+      <button class="fraud-btn fraud-btn-proceed" id="fraudOTPVerifyBtn" onclick="verifyFraudOTP()" disabled>Verify OTP & Pay</button>`;
+    document.getElementById('fraudOTPInput').addEventListener('input', () => {
+      document.getElementById('fraudOTPVerifyBtn').disabled = document.getElementById('fraudOTPInput').value.length < 6;
+    });
+  } else {
+    actionsEl.innerHTML = `
+      <button class="fraud-btn fraud-btn-block" onclick="cancelFraud()">🚫 Dismiss & Cancel Payment</button>`;
+  }
+}
+
+function cancelFraud() {
+  document.getElementById('fraudModal').classList.remove('show');
+  showToast('❌ Payment cancelled');
+}
+
+function verifyFraudOTP() {
+  const val = document.getElementById('fraudOTPInput').value;
+  if (val.length === 6) {
+    document.getElementById('fraudOTPSection').style.display = 'none';
+    document.getElementById('fraudActions').innerHTML =
+      `<button class="fraud-btn fraud-btn-cancel" onclick="cancelFraud()">Cancel</button>
+       <button class="fraud-btn fraud-btn-proceed" onclick="proceedAfterFraud()">✓ OTP Verified — Pay ₹${currentAmt.toLocaleString('en-IN')}</button>`;
+    showToast('✅ OTP verified successfully');
+  } else {
+    document.getElementById('fraudOTPInput').style.borderColor = '#dc2626';
+    setTimeout(() => document.getElementById('fraudOTPInput').style.borderColor = '', 1000);
+    showToast('⚠️ Enter a 6-digit OTP');
+  }
+}
+
+function proceedAfterFraud() {
+  document.getElementById('fraudModal').classList.remove('show');
+  processPayment();
+}
+
+/* ─── FRAUD SCORING ENGINE (from FraudShield) ─── */
+function computeFactors(txn) {
+  const f = {};
+
+  const ratio = txn.amount / txn.avg_spend;
+  f.amount_spike = { score: Math.min(ratio / 10, 1), label: 'Amount Spike', desc: `₹${txn.amount.toLocaleString('en-IN')} vs avg ₹${txn.avg_spend.toLocaleString('en-IN')} (${ratio.toFixed(1)}x)` };
+
+  const timeScores = { 'Morning': 0.1, 'Afternoon': 0.05, 'Evening': 0.2, 'Late Night': 0.65, 'Midnight': 0.85 };
+  const timeKey = Object.keys(timeScores).find(k => txn.time.startsWith(k)) || 'Morning';
+  f.time_risk = { score: timeScores[timeKey], label: 'Time Risk', desc: `Transaction at ${txn.time}` };
+
+  const locScores = { 'Same City': 0.05, 'Different City': 0.3, 'Different State': 0.55, 'International': 0.8, 'VPN': 0.9 };
+  const locKey = Object.keys(locScores).find(k => txn.location.includes(k)) || 'Same City';
+  f.location_risk = { score: locScores[locKey], label: 'Location', desc: txn.location };
+
+  const devScores = { 'Known': 0.05, 'New Device': 0.5, 'Rooted': 0.8, 'Emulator': 0.95 };
+  const devKey = Object.keys(devScores).find(k => txn.device.includes(k)) || 'Known';
+  f.device_trust = { score: devScores[devKey], label: 'Device', desc: txn.device };
+
+  const vel = Math.min(txn.velocity / 20, 1);
+  f.velocity = { score: vel, label: 'Velocity', desc: `${txn.velocity} transactions today` };
+
+  const repScores = { 'Yes — Transacted': 0.05, 'No — First': 0.45, 'Flagged': 0.85, 'Reported': 0.98 };
+  const repKey = Object.keys(repScores).find(k => txn.known.startsWith(k)) || 'No — First';
+  f.recipient_rep = { score: repScores[repKey], label: 'Recipient', desc: txn.known };
+
+  const netScores = { '4G': 0.05, 'Public WiFi': 0.5, 'VPN Active': 0.7, 'Tor': 0.95 };
+  const netKey = Object.keys(netScores).find(k => txn.network.includes(k)) || '4G';
+  f.network_risk = { score: netScores[netKey], label: 'Network', desc: txn.network };
+
+  const ageScores = { 'Established': 0.05, 'Moderate': 0.2, 'New (1': 0.6, 'Very New': 0.9 };
+  const ageKey = Object.keys(ageScores).find(k => txn.recip_age.includes(k)) || 'Established';
+  f.account_age = { score: ageScores[ageKey], label: 'Acct Age', desc: `Recipient: ${txn.recip_age}` };
+
+  const phishingPatterns = ['lottery', 'prize', 'winner', 'free', 'gift', 'reward', 'claim'];
+  if (phishingPatterns.some(p => txn.recipient.toLowerCase().includes(p))) {
+    f.recipient_rep.score = Math.max(f.recipient_rep.score, 0.95);
+    f.recipient_rep.desc += ' ⚠ Phishing pattern detected';
+  }
+
+  return f;
+}
+
+function computeRiskScore(factors) {
+  const weights = { amount_spike:0.18, time_risk:0.10, location_risk:0.12, device_trust:0.14, velocity:0.16, recipient_rep:0.18, network_risk:0.06, account_age:0.06 };
+  let score = 0;
+  for (const [k, w] of Object.entries(weights)) { if (factors[k]) score += factors[k].score * w; }
+  const highSignals = Object.values(factors).filter(f => f.score > 0.7).length;
+  if (highSignals >= 3) score = Math.min(score * 1.25, 0.99);
+  if (highSignals >= 5) score = Math.min(score * 1.4, 0.99);
+  return Math.min(Math.max(score, 0.01), 0.99);
+}
+
+/* ─── CLAUDE AI EXPLANATION ─── */
+async function getClaudeExplanation(txn, factors, score, decision) {
+  const highFactors = Object.entries(factors)
+    .filter(([,f]) => f.score > 0.4)
+    .map(([,f]) => `${f.label}: ${Math.round(f.score*100)}% risk — ${f.desc}`)
+    .join('; ');
+
+  const prompt = `You are FraudShield AI embedded in NexPay Bank's payment system. A customer is about to send money and you just analyzed their transaction for fraud. Provide a clear, reassuring (or warning) explanation in 2–3 sentences addressed to the customer.
+
+Transaction details:
+- Sender: ${txn.sender} → Recipient: ${txn.recipient}
+- Amount: ₹${txn.amount.toLocaleString('en-IN')} (avg monthly spend: ₹${txn.avg_spend.toLocaleString('en-IN')})
+- Time: ${txn.time}, Location: ${txn.location}
+- Recipient status: ${txn.known}
+- Risk Score: ${score.toFixed(2)} → Decision: ${decision}
+- Key signals: ${highFactors || 'None significant'}
+
+Decision context:
+- ALLOW: Reassure them the payment is safe to proceed
+- OTP: Explain why extra verification is needed, what signal triggered it
+- BLOCK: Clearly warn them why this looks like fraud, urge them NOT to proceed
+
+Use **bold** for key facts. Keep it under 60 words. Speak directly to the customer ("Your payment...", "We detected..."). Do not use bullet points.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role:'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    typewriterEffect('fraudAIText', text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'));
+  } catch(e) {
+    typewriterEffect('fraudAIText', generateLocalExplanation(txn, factors, score, decision));
+  }
+}
+
+function generateLocalExplanation(txn, factors, score, decision) {
+  const topRisks = Object.entries(factors).filter(([,f]) => f.score > 0.5).map(([,f]) => f.label.toLowerCase());
+  if (decision === 'ALLOW') {
+    return `Your payment of <strong>₹${txn.amount.toLocaleString('en-IN')}</strong> to <strong>${txn.recipient}</strong> looks safe — risk score is a low <strong>${score.toFixed(2)}</strong>. All signals are within your normal spending patterns. You may proceed with confidence.`;
+  } else if (decision === 'OTP') {
+    return `We detected some unusual signals (${topRisks.slice(0,2).join(', ')}) with a <strong>moderate risk score of ${score.toFixed(2)}</strong>. To protect your account, please verify this payment with a one-time password before ₹${txn.amount.toLocaleString('en-IN')} is sent.`;
+  } else {
+    return `<strong>Warning:</strong> This transaction to <strong>${txn.recipient}</strong> has been blocked due to a <strong>high fraud risk score of ${score.toFixed(2)}</strong>. Signals like ${topRisks.slice(0,2).join(' and ')} match known fraud patterns — please do not proceed.`;
+  }
+}
+
+function typewriterEffect(id, html) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  const fullText = temp.textContent;
+  let i = 0;
+  const interval = setInterval(() => {
+    i += 3;
+    if (i >= fullText.length) { el.innerHTML = html; clearInterval(interval); }
+    else { el.textContent = fullText.substring(0, i); }
+  }, 18);
+}
+
+/* ─── PROCESS PAYMENT ─── */
+function processPayment() {
+  const steps = [
+    ['Connecting to NexPay Bank…', 'Establishing TLS 1.3 channel'],
+    ['Validating credentials…', 'Checking UPI mandate'],
+    ['Fetching recipient account…', currentUPI],
+    ['Debiting your account…', '•••4892 → ' + currentUPI],
+    ['Processing via NPCI…', 'IMPS Settlement Network'],
+    ['Confirming transaction…', 'Awaiting acknowledgement'],
+  ];
+  let i = 0;
+  showLoading(steps[0][0], steps[0][1]);
+  const interval = setInterval(() => {
+    if (i < steps.length) { showLoading(steps[i][0], steps[i][1]); i++; }
+    else { clearInterval(interval); hideLoading(); showSuccess(); }
+  }, 600);
+}
+
+function showSuccess() {
+  const ref = 'TXN' + Date.now().toString().slice(-10);
+  const now = new Date().toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' });
+  document.getElementById('suc-amt').textContent = '₹' + currentAmt.toLocaleString('en-IN', {minimumFractionDigits:2});
+  document.getElementById('suc-to').textContent = currentName;
+  document.getElementById('suc-ref').textContent = ref;
+  document.getElementById('suc-time').textContent = now + ' · via IMPS';
+  // Update badge based on fraud decision
+  const badge = document.getElementById('suc-fraud-badge');
+  if (fraudDecision === 'OTP') badge.textContent = '🛡 FraudShield: Verified (OTP)';
+  else badge.textContent = '🛡 FraudShield: Verified Safe';
+  document.getElementById('successModal').classList.add('show');
+
+  balance -= currentAmt;
+  limitUsed += currentAmt;
+  txnCount++;
+  document.getElementById('sideBalance').textContent = '₹' + balance.toLocaleString('en-IN', {minimumFractionDigits:2});
+  document.getElementById('txnCount').textContent = txnCount + ' / 20';
+  document.getElementById('limitUsed').textContent = '₹' + Math.round(limitUsed).toLocaleString('en-IN') + ' / ₹1,00,000';
+  document.getElementById('limitBar').style.width = Math.min((limitUsed / 100000) * 100, 100) + '%';
+
+  addTxn(currentName, currentUPI, currentAmt, document.getElementById('remarkInput').value, ref);
+}
+
+function addTxn(name, upi, amt, remark, ref) {
+  const list = document.getElementById('txnList');
+  const li = document.createElement('li');
+  li.className = 'txn-item';
+  li.style.animation = 'modalIn 0.3s ease';
+  const fraudTag = fraudDecision === 'BLOCK' ? '🚫 Fraud: Blocked' : fraudDecision === 'OTP' ? '⚠️ Fraud: OTP Verified' : '✅ Fraud: Clear';
+  li.innerHTML = `
+    <div class="txn-icon debit">💸</div>
+    <div class="txn-info">
+      <div class="txn-name">${name}</div>
+      <div class="txn-ref">${ref} · ${upi}${remark ? ' · ' + remark : ''} · ${fraudTag}</div>
+    </div>
+    <div>
+      <div class="txn-amount debit">−₹${amt.toLocaleString('en-IN', {minimumFractionDigits:2})}</div>
+      <div style="font-size:11px;color:var(--muted);text-align:right">Now</div>
+    </div>`;
+  list.prepend(li);
+}
+
+function donePayment() {
+  document.getElementById('successModal').classList.remove('show');
+  document.getElementById('recipientUPI').value = '';
+  document.getElementById('amountInput').value = '';
+  document.getElementById('remarkInput').value = '';
+  document.getElementById('verifiedBadge').classList.remove('show');
+  pin = ''; currentAmt = 0; currentUPI = ''; currentName = ''; fraudDecision = null;
+}
+
+/* ─── QR ─── */
+let scanTimeout = null, scannedQRData = null;
+
+function openQRScanner() {
+  document.getElementById('qrScanModal').classList.add('show');
+  document.getElementById('qrDetected').classList.remove('show');
+  document.getElementById('sampleQRSection').style.display = 'block';
+  document.getElementById('scannerStatusText').textContent = 'Scanning for QR Code…';
+}
+
+function closeQRScanner() { document.getElementById('qrScanModal').classList.remove('show'); if (scanTimeout) clearTimeout(scanTimeout); scannedQRData = null; }
+
+function simulateScan(name, upi, amt, cat) {
+  document.getElementById('sampleQRSection').style.display = 'none';
+  document.getElementById('scannerStatusText').textContent = 'QR Detected! Decoding…';
+  const scanline = document.querySelector('.qr-scanline');
+  scanline.style.animationDuration = '0.3s';
+  scanTimeout = setTimeout(() => {
+    scanline.style.animationDuration = '2s';
+    scannedQRData = { name, upi, amt, cat };
+    document.getElementById('qr-det-name').textContent = name;
+    document.getElementById('qr-det-upi').textContent = upi;
+    document.getElementById('qr-det-amt').textContent = amt === 'Any Amount' ? 'Enter manually' : amt;
+    document.getElementById('qr-det-cat').textContent = cat;
+    document.getElementById('qrDetected').classList.add('show');
+    document.getElementById('scannerStatusText').textContent = '✅ Decoded successfully';
+    showToast('📷 QR Code scanned: ' + name);
+  }, 1200);
+}
+
+function proceedFromQR() {
+  if (!scannedQRData) return;
+  closeQRScanner();
+  const { name, upi, amt } = scannedQRData;
+  document.getElementById('recipientUPI').value = upi;
+  document.getElementById('verifiedName').textContent = name;
+  document.getElementById('verifiedBadge').classList.add('show');
+  currentUPI = upi; currentName = name;
+  const numAmt = parseFloat(amt.replace(/[^0-9.]/g, ''));
+  if (!isNaN(numAmt) && numAmt > 0) { document.getElementById('amountInput').value = numAmt; currentAmt = numAmt; }
+  document.getElementById('remarkInput').value = 'Via QR Scan';
+  showToast('✅ Form auto-filled from QR!');
+  document.querySelector('.btn-pay').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+/* ─── MY QR ─── */
+function openMyQR() { document.getElementById('myQRModal').classList.add('show'); setTimeout(drawQR, 100); }
+function closeMyQR() { document.getElementById('myQRModal').classList.remove('show'); }
+function regenerateQR() { clearTimeout(window._qrRegen); window._qrRegen = setTimeout(drawQR, 400); }
+
+function drawQR() {
+  const canvas = document.getElementById('myQRCanvas');
+  const ctx = canvas.getContext('2d');
+  const size = 200;
+  ctx.clearRect(0, 0, size, size);
+  const amt = document.getElementById('myQRAmount').value;
+  const upiStr = 'upi://pay?pa=manisha.agarwal@nexpay&pn=Manisha+Agarwal&cu=INR' + (amt ? '&am=' + amt : '');
+  const cells = 21, cellSize = size / cells;
+  ctx.fillStyle = '#003087';
+  let seed = 0;
+  for (let c of upiStr) seed = (seed * 31 + c.charCodeAt(0)) & 0xffffffff;
+  function seededBit(r, c) { let h = seed ^ (r * 7919 + c * 6271); h = ((h >> 16) ^ h) * 0x45d9f3b; h = ((h >> 16) ^ h); return (h & 1) === 1; }
+  for (let r = 0; r < cells; r++) {
+    for (let c = 0; c < cells; c++) {
+      const inTL = r < 9 && c < 9, inTR = r < 9 && c >= cells - 9, inBL = r >= cells - 9 && c < 9;
+      if (inTL || inTR || inBL) continue;
+      if (seededBit(r, c)) ctx.fillRect(c * cellSize, r * cellSize, cellSize - 0.5, cellSize - 0.5);
+    }
+  }
+  function drawFinder(x, y) {
+    ctx.fillStyle = '#003087'; ctx.fillRect(x*cellSize, y*cellSize, 7*cellSize, 7*cellSize);
+    ctx.fillStyle = 'white'; ctx.fillRect((x+1)*cellSize, (y+1)*cellSize, 5*cellSize, 5*cellSize);
+    ctx.fillStyle = '#003087'; ctx.fillRect((x+2)*cellSize, (y+2)*cellSize, 3*cellSize, 3*cellSize);
+  }
+  drawFinder(0,0); drawFinder(cells-7, 0); drawFinder(0, cells-7);
+  ctx.fillStyle = '#003087';
+  for (let i = 8; i < cells - 8; i++) {
+    if (i % 2 === 0) { ctx.fillRect(i*cellSize, 6*cellSize, cellSize-0.5, cellSize-0.5); ctx.fillRect(6*cellSize, i*cellSize, cellSize-0.5, cellSize-0.5); }
+  }
+  if (amt) {
+    ctx.fillStyle = 'rgba(0,48,135,0.08)'; ctx.fillRect(0, size-22, size, 22);
+    ctx.fillStyle = '#003087'; ctx.font = 'bold 11px IBM Plex Mono, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('₹' + parseFloat(amt).toLocaleString('en-IN'), size/2, size-7);
+  }
+}
+function shareQR() { showToast('📤 QR Code copied to clipboard! (Demo)'); }
+
+/* ─── LOADING ─── */
+function showLoading(text, sub) {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingSub').textContent = sub;
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
+</script>
+</body>
+</html>
